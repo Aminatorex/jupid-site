@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jupid — Bookkeeping, taxes and LLC formation in one chat</title>
+<meta name="description" content="Jupid is a conversational AI back office for small businesses: bookkeeping, tax filings and LLC formation — handled in a chat, powered by Claude.">
+<meta name="theme-color" content="#f4f1ea">
+<meta property="og:title" content="Jupid — your back office, in one chat">
+<meta property="og:description" content="Bookkeeping, tax filings and LLC formation for small businesses. Just talk to it.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jupid.bid/">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f4f1ea;
+  --paper-2:#ebe6db;
+  --card:#fbfaf6;
+  --ink:#16140f;
+  --ink-2:#3d3a33;
+  --muted:#6f6a5f;
+  --line:#d9d3c5;
+  --accent:#d9481c;      /* vermilion */
+  --accent-ink:#a8340f;
+  --green:#2f6b4f;
+  --serif:"Instrument Serif", Georgia, serif;
+  --sans:"Geist", ui-sans-serif, system-ui, sans-serif;
+  --mono:"Geist Mono", ui-monospace, monospace;
+  --r:14px;
+  --max:1180px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img,svg{display:block}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 28px}
+h1,h2,h3{font-weight:400;margin:0;text-wrap:balance}
+p{text-wrap:pretty}
+.serif{font-family:var(--serif)}
+.mono{font-family:var(--mono);font-size:.8em;letter-spacing:.02em}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:20;background:color-mix(in oklab,var(--paper) 88%,transparent);backdrop-filter:saturate(1.2) blur(8px);border-bottom:1px solid transparent;transition:border-color .2s}
+.nav.scrolled{border-bottom-color:var(--line)}
+.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:66px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-family:var(--serif);font-size:28px;letter-spacing:-.01em}
+.logo .mark{width:26px;height:26px}
+.nav ul{display:flex;gap:30px;list-style:none;margin:0;padding:0;font-size:15px}
+.nav ul a{text-decoration:none;color:var(--ink-2)}
+.nav ul a:hover{color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 20px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:var(--paper);font:500 15px/1 var(--sans);text-decoration:none;cursor:pointer;transition:transform .15s,background .15s}
+.btn:hover{background:#000;transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn.ghost:hover{background:var(--paper-2)}
+.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.accent:hover{background:var(--accent-ink);border-color:var(--accent-ink)}
+
+/* HERO */
+.hero{padding:72px 0 96px}
+.hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center}
+.hero h1{font-family:var(--serif);font-size:clamp(46px,6.4vw,86px);line-height:.98;letter-spacing:-.02em}
+.hero h1 em{color:var(--accent);font-style:italic}
+.hero .lede{font-size:19px;color:var(--ink-2);max-width:31em;margin:26px 0 34px}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;color:var(--ink-2);background:var(--card);margin-bottom:26px}
+.pill b{font-weight:500;background:var(--ink);color:var(--paper);border-radius:999px;padding:2px 8px;font-size:11.5px;font-family:var(--mono);letter-spacing:.04em}
+.waitlist{display:flex;gap:8px;max-width:470px;padding:6px;border:1px solid var(--line);background:var(--card);border-radius:999px}
+.waitlist input{flex:1;min-width:0;border:0;background:transparent;font:16px var(--sans);padding:0 14px;color:var(--ink)}
+.waitlist input:focus{outline:none}
+.waitlist:focus-within{border-color:var(--ink)}
+.form-note{font-size:13.5px;color:var(--muted);margin-top:12px;min-height:1.4em}
+.form-note.ok{color:var(--green)}
+.form-note.err{color:var(--accent-ink)}
+
+/* CHAT DEMO */
+.demo{background:var(--card);border:1px solid var(--line);border-radius:22px;box-shadow:0 1px 0 #fff inset,0 30px 60px -30px rgba(40,30,10,.25);overflow:hidden}
+.demo-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.demo-head .who{display:flex;align-items:center;gap:10px;font-weight:500;font-size:15px}
+.demo-head .who small{display:block;font-weight:400;color:var(--muted);font-size:12.5px}
+.av{width:32px;height:32px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+.av svg{width:18px;height:18px}
+.tabs{display:flex;gap:4px;background:var(--paper-2);border-radius:999px;padding:3px}
+.tabs button{border:0;background:transparent;font:500 12.5px var(--sans);padding:7px 12px;border-radius:999px;cursor:pointer;color:var(--ink-2);min-height:32px}
+.tabs button[aria-selected="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.thread{height:430px;overflow:hidden;padding:28px 18px 8px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 44px);mask-image:linear-gradient(to bottom,transparent 0,#000 44px);display:flex;flex-direction:column;gap:12px;justify-content:flex-end}
+.msg{max-width:86%;padding:11px 14px;border-radius:16px;font-size:14.5px;line-height:1.45;animation:pop .35s ease both}
+.msg.u{align-self:flex-end;background:var(--ink);color:var(--paper);border-bottom-right-radius:5px}
+.msg.a{align-self:flex-start;background:var(--paper-2);border-bottom-left-radius:5px}
+.msg .doc{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--mono);font-size:12px;line-height:1.6}
+.doc .row{display:flex;justify-content:space-between;gap:16px}
+.doc .row span:last-child{text-align:right}
+.doc .tot{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px;font-weight:500}
+.doc .ok{color:var(--green)}
+.chips{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.chips span.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chips span{font-size:12.5px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 10px}
+.typing{display:inline-flex;gap:4px;padding:14px 16px}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:blink 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+.composer{display:flex;align-items:center;gap:10px;margin:8px 14px 14px;padding:10px 10px 10px 16px;border:1px solid var(--line);border-radius:14px;color:var(--muted);font-size:14.5px}
+.composer .send{margin-left:auto;width:32px;height:32px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+
+/* MARQUEE strip */
+.strip{-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:18px 0;overflow:hidden;white-space:nowrap}
+.strip .track{display:inline-flex;gap:48px;animation:slide 40s linear infinite;font-family:var(--serif);font-size:24px;color:var(--ink-2)}
+.strip .track span::after{content:"✳";margin-left:48px;color:var(--accent);font-size:16px;vertical-align:middle}
+@keyframes slide{to{transform:translateX(-50%)}}
+
+/* SECTIONS */
+section{padding:120px 0}
+.sec-head{display:grid;grid-template-columns:1fr 1.4fr;gap:64px;align-items:end;margin-bottom:64px}
+.sec-head h2{font-family:var(--serif);font-size:clamp(38px,4.6vw,62px);line-height:1;letter-spacing:-.015em}
+.sec-head p{color:var(--ink-2);font-size:18px;margin:0;max-width:34em}
+
+/* JOBS */
+.job{display:grid;grid-template-columns:90px 1fr 1fr;gap:40px;padding:48px 0;border-top:1px solid var(--line);align-items:start}
+.job:last-child{border-bottom:1px solid var(--line)}
+.job .num{font-family:var(--serif);font-size:56px;line-height:.9;color:var(--accent)}
+.job h3{font-family:var(--serif);font-size:38px;line-height:1.05;margin-bottom:16px}
+.job p{color:var(--ink-2);margin:0 0 18px}
+.job ul{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:15.5px}
+.job li{display:flex;gap:10px}
+.job li::before{content:"";flex:none;width:14px;height:1px;background:var(--ink);margin-top:.8em}
+.artifact{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px;font-family:var(--mono);font-size:13px;line-height:1.75}
+.artifact .t{font-family:var(--sans);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between}
+.artifact .row{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums;border-bottom:1px dashed var(--line);padding:4px 0}
+.artifact .row:last-child{border:0}
+.artifact .row.l3{display:grid;grid-template-columns:1.3fr 1fr auto;align-items:center}
+.artifact .row.l3 span:last-child{text-align:right}
+.artifact .row.l3 .c{color:var(--muted)}
+.tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--paper-2);color:var(--ink-2)}
+.tag.g{background:#dfeee4;color:var(--green)}
+.tag.o{background:#f8dfd3;color:var(--accent-ink)}
+.steps{display:grid;gap:0}
+.steps .s{display:grid;grid-template-columns:20px 1fr auto;gap:12px;align-items:center;padding:6px 0}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--green)}
+.dot.f{background:var(--green)}
+.dot.p{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 4px #f8dfd3}
+
+/* HOW */
+.how{background:var(--ink);color:var(--paper)}
+.how .sec-head p{color:#bdb6a6}
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid #3a372f}
+.how-grid > div{padding:36px 32px 8px 0}
+.how-grid > div + div{padding-left:32px;border-left:1px solid #3a372f}
+.how-grid .k{font-family:var(--mono);font-size:12.5px;color:var(--accent);letter-spacing:.06em}
+.how-grid h3{font-family:var(--serif);font-size:32px;margin:14px 0 12px}
+.how-grid p{color:#bdb6a6;margin:0;font-size:16px}
+.how{padding-bottom:104px}
+.quote{margin-top:88px;max-width:900px}
+.quote blockquote{margin:0;font-family:var(--serif);font-size:clamp(28px,3.4vw,44px);line-height:1.12}
+.quote blockquote em{color:var(--accent)}
+.quote cite{display:block;margin-top:22px;font-style:normal;color:#bdb6a6;font-size:15px}
+.quote cite b{color:var(--paper);font-weight:500}
+
+/* TRUST */
+.trust-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:20px}
+.trust-grid > div{border:1px solid var(--line);border-radius:var(--r);padding:28px;background:var(--card)}
+.trust-grid .big{grid-row:span 2;background:var(--paper-2);display:flex;flex-direction:column;justify-content:space-between}
+.trust-grid h3{font-family:var(--serif);font-size:28px;line-height:1.1;margin-bottom:10px}
+.trust-grid .big h3{font-size:40px}
+.trust-grid p{margin:0;color:var(--ink-2);font-size:15.5px}
+.signoff{margin-top:28px;border-top:1px solid var(--line);padding-top:18px;display:flex;align-items:center;gap:14px;font-size:14px}
+.signoff .stamp{font-family:var(--mono);font-size:11px;border:1.5px solid var(--green);color:var(--green);border-radius:6px;padding:4px 8px;transform:rotate(-4deg);letter-spacing:.06em}
+
+/* PRICING */
+.plans{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;align-items:stretch}
+.plan{border:1px solid var(--line);border-radius:var(--r);padding:30px;background:var(--card);display:flex;flex-direction:column}
+.plan.hl{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.plan .name{display:flex;justify-content:space-between;align-items:center;font-weight:500}
+.plan.hl .tag{background:var(--accent);color:#fff}
+.plan .price{font-family:var(--serif);font-size:64px;line-height:1;margin:22px 0 4px}
+.plan .price small{font-family:var(--sans);font-size:15px;color:var(--muted)}
+.plan.hl .price small,.plan.hl .sub,.plan.hl li{color:#cfc8b8}
+.plan .per{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 0 14px;letter-spacing:.03em}
+.plan.hl .per{color:#a39c8c}
+.plan .sub{color:var(--muted);font-size:14.5px;margin:0 0 22px}
+.plan ul{list-style:none;padding:0;margin:0 0 28px;display:grid;gap:10px;font-size:15px;flex:1}
+.plan li{display:flex;gap:10px}
+.plan li::before{content:"✓";color:var(--green);font-weight:600}
+.plan.hl li::before{color:var(--accent)}
+.plan.hl .btn{background:var(--paper);color:var(--ink);border-color:var(--paper)}
+.billing{display:flex;gap:4px;background:var(--paper-2);border-radius:999px;padding:4px;width:max-content}
+.billing button{border:0;background:transparent;padding:8px 16px;border-radius:999px;font:500 14px var(--sans);cursor:pointer;color:var(--ink-2);min-height:36px}
+.billing button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+
+/* FAQ */
+.faq{display:grid;grid-template-columns:1fr 1.6fr;gap:64px}
+.faq h2{font-family:var(--serif);font-size:clamp(38px,4.6vw,62px);line-height:1}
+details{border-top:1px solid var(--line);padding:22px 0}
+details:last-child{border-bottom:1px solid var(--line)}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:20px;font-size:19px;font-weight:500}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";font-family:var(--mono);font-weight:400;color:var(--muted);transition:transform .2s}
+details[open] summary::after{transform:rotate(45deg)}
+details p{color:var(--ink-2);margin:14px 0 0;max-width:40em}
+
+/* CTA + FOOTER */
+.cta{padding:0 0 120px}
+.cta-box{background:var(--accent);color:#fff;border-radius:28px;padding:72px 64px;display:grid;grid-template-columns:1.3fr 1fr;gap:48px;align-items:end;position:relative;overflow:hidden}
+.cta-box h2{font-family:var(--serif);font-size:clamp(42px,5.4vw,76px);line-height:.98}
+.cta-box p{margin:0 0 20px;color:#ffe3d6}
+.cta-box .waitlist{background:#fff;border-color:#fff}
+.cta-box .form-note{color:#fff}
+.cta-box .form-note.ok{color:#fff}
+footer{border-top:1px solid var(--line);padding:44px 0 56px;font-size:14px;color:var(--muted)}
+footer .wrap{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:40px}
+footer h4{font:500 13px var(--sans);color:var(--ink);margin:0 0 12px}
+footer ul{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+footer a{text-decoration:none}
+footer a:hover{color:var(--ink)}
+.legal{grid-column:1/-1;border-top:1px solid var(--line);padding-top:24px;margin-top:8px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;font-size:12.5px}
+
+/* reveal */
+.rv{opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .7s ease}
+.rv.in{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media (max-width:980px){
+  .hero .wrap,.sec-head,.faq,.cta-box{grid-template-columns:1fr;gap:36px}
+  .job{grid-template-columns:60px 1fr;gap:20px 24px}
+  .job .artifact{grid-column:2}
+  .trust-grid{grid-template-columns:1fr 1fr}
+  .trust-grid .big{grid-column:1/-1;grid-row:auto}
+  .plans{grid-template-columns:1fr;max-width:520px}
+  .how-grid{grid-template-columns:1fr}
+  .how-grid > div + div{padding-left:0;border-left:0;border-top:1px solid #3a372f}
+  .how-grid > div{padding:28px 0}
+  footer .wrap{grid-template-columns:1fr 1fr}
+  footer .brand{grid-column:1/-1}
+  .nav ul{display:none}
+}
+@media (max-width:620px){
+  body{font-size:16px}
+  .wrap{padding:0 20px}
+  section{padding:84px 0}
+  .hero{padding:40px 0 72px}
+  .job{grid-template-columns:1fr}
+  .job .artifact{grid-column:1}
+  .job .num{font-size:40px}
+  .trust-grid{grid-template-columns:1fr}
+  .cta-box{padding:44px 26px;border-radius:22px}
+  .thread{height:400px}
+  .tabs button{padding:7px 9px}
+  .demo-head .who small{display:none}
+  .waitlist{flex-direction:column;border-radius:18px}
+  .waitlist input{min-height:44px}
+  .nav .btn{padding:0 14px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+  .rv{opacity:1;transform:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Jupid home">
+      <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#16140f"/><path d="M8 18.5c4.5-3.2 11.5-3.2 16 0" stroke="#d9481c" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="16" cy="11.5" r="2.6" fill="#f4f1ea"/></svg>
+      Jupid
+    </a>
+    <ul>
+      <li><a href="#what">What it does</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <a class="btn" href="#join">Join the waitlist</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <div class="pill"><b>BETA</b> Private beta opens this winter</div>
+      <h1>Your back office,<br>now a <em>conversation.</em></h1>
+      <p class="lede">Jupid is an AI accountant for small businesses. It keeps your books, files your taxes and forms your LLC — you just chat with it. Powered by Claude, reviewed by licensed humans.</p>
+      <form class="waitlist" data-form>
+        <label for="e1" class="sr" style="position:absolute;left:-9999px">Work email</label>
+        <input id="e1" type="email" name="email" placeholder="you@company.com" autocomplete="email" required>
+        <button class="btn accent" type="submit">Join the waitlist</button>
+      </form>
+      <div class="form-note" aria-live="polite">No card required. We'll invite founders in batches.</div>
+    </div>
+
+    <div class="demo" aria-label="Product demo: a chat with Jupid">
+      <div class="demo-head">
+        <div class="who">
+          <span class="av"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 18.5c5-3.4 13-3.4 18 0" stroke="#d9481c" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="16" cy="11" r="3" fill="#f4f1ea"/></svg></span>
+          <span>Jupid<small>Your accountant · online</small></span>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Demo scenario">
+          <button role="tab" aria-selected="true" data-s="books">Books</button>
+          <button role="tab" aria-selected="false" data-s="taxes">Taxes</button>
+          <button role="tab" aria-selected="false" data-s="llc">LLC</button>
+        </div>
+      </div>
+      <div class="thread" id="thread" aria-live="polite"></div>
+      <div class="composer" aria-hidden="true">Ask anything about your business money…
+        <span class="send"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="strip" aria-hidden="true">
+  <div class="track">
+    <span>Categorize 400 transactions</span><span>Reconcile Stripe payouts</span><span>File Form 1120-S</span><span>Register a Delaware LLC</span><span>Get an EIN</span><span>Quarterly estimated taxes</span><span>Send a 1099-NEC</span><span>Track your runway</span>
+    <span>Categorize 400 transactions</span><span>Reconcile Stripe payouts</span><span>File Form 1120-S</span><span>Register a Delaware LLC</span><span>Get an EIN</span><span>Quarterly estimated taxes</span><span>Send a 1099-NEC</span><span>Track your runway</span>
+  </div>
+</div>
+
+<section id="what">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>Three jobs you hate. One chat that does them.</h2>
+      <p>Most small businesses juggle a bookkeeper, a tax preparer and a formation service — three logins, three invoices, three people who don't talk to each other. Jupid is one assistant with the whole picture.</p>
+    </div>
+
+    <article class="job rv">
+      <div class="num">01</div>
+      <div>
+        <h3>Bookkeeping that keeps itself</h3>
+        <p>Connect your bank, cards and Stripe. Jupid categorizes every transaction, matches receipts you forward by email, and asks you only about the ones it can't figure out.</p>
+        <ul>
+          <li>Real-time P&amp;L, balance sheet and cash flow</li>
+          <li>Receipts by email, photo or chat</li>
+          <li>Month-end close in minutes, not weekends</li>
+        </ul>
+      </div>
+      <div class="artifact">
+        <div class="t"><span>Ledger · September</span><span class="tag g">auto-categorized</span></div>
+        <div class="row l3"><span>AWS · EMEA</span><span class="c">Hosting</span><span>−$412.08</span></div>
+        <div class="row l3"><span>Stripe payout</span><span class="c">Revenue</span><span>+$8,940.00</span></div>
+        <div class="row l3"><span>Figma</span><span class="c">Software</span><span>−$45.00</span></div>
+        <div class="row l3"><span>WeWork Day Pass</span><span class="c">Office</span><span>−$39.00</span></div>
+        <div class="row l3"><span>Zelle · M. Ortiz</span><span><span class="tag o">needs you</span></span><span>−$1,200.00</span></div>
+      </div>
+    </article>
+
+    <article class="job rv">
+      <div class="num">02</div>
+      <div>
+        <h3>Taxes, filed — not just prepared</h3>
+        <p>Because Jupid already knows your books, your return is mostly written before you ask. It finds deductions, reminds you about quarterly estimates and e-files federal and state returns.</p>
+        <ul>
+          <li>Business returns: 1065, 1120, 1120-S, Schedule C</li>
+          <li>Quarterly estimates and 1099s for contractors</li>
+          <li>Every return signed off by an enrolled agent or CPA</li>
+        </ul>
+      </div>
+      <div class="artifact">
+        <div class="t"><span>Form 1120-S · tax year 2025</span><span class="tag">S-corp</span></div>
+        <div class="row"><span>Gross receipts</span><span>$214,300</span></div>
+        <div class="row"><span>Deductions found</span><span>$61,870</span></div>
+        <div class="row"><span>Home office (§280A)</span><span>$3,120</span></div>
+        <div class="row"><span>Reviewer</span><span>J. Park, EA</span></div>
+        <div class="row"><span>Status</span><span class="tag g">ready to e-file</span></div>
+      </div>
+    </article>
+
+    <article class="job rv">
+      <div class="num">03</div>
+      <div>
+        <h3>Your LLC, formed in an afternoon</h3>
+        <p>Tell Jupid what you're building. It recommends a state and structure, drafts the operating agreement, files with the Secretary of State, gets your EIN and sets up your books from day one.</p>
+        <ul>
+          <li>All 50 states, including Delaware and Wyoming</li>
+          <li>Registered agent and compliance calendar included</li>
+          <li>Non-US founders welcome — no SSN needed</li>
+        </ul>
+      </div>
+      <div class="artifact">
+        <div class="t"><span>Northwind Studio LLC</span><span class="tag o">in progress</span></div>
+        <div class="steps">
+          <div class="s"><span class="dot f"></span><span>Name availability check</span><span>Mon</span></div>
+          <div class="s"><span class="dot f"></span><span>Articles of Organization filed</span><span>Mon</span></div>
+          <div class="s"><span class="dot f"></span><span>Operating agreement signed</span><span>Tue</span></div>
+          <div class="s"><span class="dot p"></span><span>EIN from the IRS</span><span>today</span></div>
+          <div class="s"><span class="dot"></span><span>Bank account + books</span><span>—</span></div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="how" id="how">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>No dashboards to learn.</h2>
+      <p>If you can text, you can run your finances. Jupid does the work, shows you what changed and waits for your yes before anything official leaves the building.</p>
+    </div>
+    <div class="how-grid rv">
+      <div>
+        <span class="k">STEP 1 · 5 MINUTES</span>
+        <h3>Connect</h3>
+        <p>Link your bank, cards, payroll and payment processors with read-only access. Or start from zero and let Jupid form the company first.</p>
+      </div>
+      <div>
+        <span class="k">STEP 2 · ANY TIME</span>
+        <h3>Talk</h3>
+        <p>Ask "can I afford a hire in March?" or "why is my tax bill higher?" in plain language — in chat, by email or on your phone.</p>
+      </div>
+      <div>
+        <span class="k">STEP 3 · ONE TAP</span>
+        <h3>Approve</h3>
+        <p>Filings, payments and registrations are drafted, reviewed by a licensed professional and sent only after you approve.</p>
+      </div>
+    </div>
+    <div class="quote rv">
+      <blockquote>“I used to spend every April in a spreadsheet. This year I answered <em>eleven questions</em> in a chat and my return was filed.”</blockquote>
+      <cite><b>Maya R.</b> — owner of a two-person design studio, Austin TX · beta tester</cite>
+    </div>
+  </div>
+</section>
+
+<section id="trust">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <h2>AI does the work. Humans sign the papers.</h2>
+      <p>Money and the IRS don't forgive hallucinations. Jupid is built so the model never acts alone on anything that matters.</p>
+    </div>
+    <div class="trust-grid rv">
+      <div class="big">
+        <div>
+          <h3>A licensed professional reviews every filing.</h3>
+          <p>Tax returns and state registrations are checked by an enrolled agent or CPA on our team before submission. If something's off, a person — not a bot — reaches out.</p>
+        </div>
+        <div class="signoff"><span class="stamp">REVIEWED</span><span>Every return carries the name of the human who approved it.</span></div>
+      </div>
+      <div>
+        <h3>Read-only by default</h3>
+        <p>Bank connections can see transactions but can't move money. Payments need your explicit approval.</p>
+      </div>
+      <div>
+        <h3>Your data trains nothing</h3>
+        <p>Your financial data is never used to train AI models — ours or anyone else's.</p>
+      </div>
+      <div>
+        <h3>Bank-grade encryption</h3>
+        <p>AES-256 at rest, TLS 1.3 in transit, SOC 2 Type II audit in progress.</p>
+      </div>
+      <div>
+        <h3>Explains itself</h3>
+        <p>Every number links back to the transactions behind it. Ask "why?" and get a straight answer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" style="padding-top:0">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div>
+        <h2>Cheaper than one hour with an accountant.</h2>
+      </div>
+      <div>
+        <p style="margin-bottom:20px">Flat monthly pricing. No hourly billing, no surprise invoices in April. Beta members lock in these prices for life.</p>
+        <div class="billing" role="group" aria-label="Billing period">
+          <button type="button" aria-pressed="false" data-b="m">Monthly</button>
+          <button type="button" aria-pressed="true" data-b="y">Yearly · save 20%</button>
+        </div>
+      </div>
+    </div>
+    <div class="plans rv">
+      <div class="plan">
+        <div class="name">Launch <span class="tag">new companies</span></div>
+        <div class="price"><span data-m="0" data-y="0">$0</span><small> + state fee</small></div>
+        <p class="per">one-time</p>
+        <p class="sub">Form your LLC, then decide.</p>
+        <ul>
+          <li>LLC formation in any state</li>
+          <li>EIN and operating agreement</li>
+          <li>Registered agent, first year</li>
+          <li>Compliance reminders</li>
+        </ul>
+        <a class="btn ghost" href="#join">Join the waitlist</a>
+      </div>
+      <div class="plan hl">
+        <div class="name">Books &amp; Taxes <span class="tag">most popular</span></div>
+        <div class="price"><span data-m="149" data-y="119">$119</span><small> / month</small></div>
+        <p class="per" data-per>billed annually</p>
+        <p class="sub">Everything a small business needs.</p>
+        <ul>
+          <li>Unlimited chat with Jupid</li>
+          <li>Bookkeeping up to $1M revenue</li>
+          <li>Annual business return, e-filed</li>
+          <li>Quarterly estimates and 1099s</li>
+          <li>Human EA/CPA review</li>
+        </ul>
+        <a class="btn" href="#join">Join the waitlist</a>
+      </div>
+      <div class="plan">
+        <div class="name">Studio <span class="tag">growing teams</span></div>
+        <div class="price"><span data-m="349" data-y="279">$279</span><small> / month</small></div>
+        <p class="per" data-per>billed annually</p>
+        <p class="sub">For multi-entity and higher volume.</p>
+        <ul>
+          <li>Everything in Books &amp; Taxes</li>
+          <li>Up to 3 entities, multi-state</li>
+          <li>Payroll and sales-tax filings</li>
+          <li>Dedicated human accountant</li>
+        </ul>
+        <a class="btn ghost" href="mailto:hello@jupid.bid">Talk to us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:0">
+  <div class="wrap faq">
+    <div class="rv"><h2>Fair questions.</h2><p style="color:var(--ink-2);margin:20px 0 0;max-width:22em">Something we didn't cover? Write to <a href="mailto:hello@jupid.bid">hello@jupid.bid</a> — a human answers.</p></div>
+    <div class="rv">
+      <details>
+        <summary>Is Jupid an accounting firm or software?</summary>
+        <p>Both. The assistant is software built on Claude by Anthropic; filings are prepared under the supervision of licensed enrolled agents and CPAs who work with us.</p>
+      </details>
+      <details open>
+        <summary>What happens if the AI gets something wrong?</summary>
+        <p>Nothing official goes out without human review and your approval. If an error on a return we filed leads to a penalty, we cover it — that's our accuracy guarantee.</p>
+      </details>
+      <details>
+        <summary>Can I switch from my current bookkeeper mid-year?</summary>
+        <p>Yes. Upload your existing books or give Jupid access to your previous software. It'll import history, flag inconsistencies and pick up where they left off.</p>
+      </details>
+      <details>
+        <summary>I'm not a US resident. Can I still form an LLC?</summary>
+        <p>Yes. Jupid handles formation, EIN applications without an SSN, a US registered agent and the extra filings foreign-owned LLCs need, like Form 5472.</p>
+      </details>
+      <details>
+        <summary>When can I start?</summary>
+        <p>We're onboarding the private beta in small batches starting this winter. Join the waitlist and we'll email you when your spot opens.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="join">
+  <div class="wrap">
+    <div class="cta-box rv">
+      <h2>Stop doing paperwork. Start a conversation.</h2>
+      <div>
+        <p>Get early access and lifetime beta pricing.</p>
+        <form class="waitlist" data-form>
+          <label for="e2" style="position:absolute;left:-9999px">Work email</label>
+          <input id="e2" type="email" name="email" placeholder="you@company.com" autocomplete="email" required>
+          <button class="btn" type="submit">Join the waitlist</button>
+        </form>
+        <div class="form-note" aria-live="polite">We'll only email you about your invite.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand">
+      <a class="logo" href="#top" style="margin-bottom:12px">
+        <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="15" fill="#16140f"/><path d="M8 18.5c4.5-3.2 11.5-3.2 16 0" stroke="#d9481c" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="16" cy="11.5" r="2.6" fill="#f4f1ea"/></svg>
+        Jupid
+      </a>
+      <p style="margin:0;max-width:22em">The conversational back office for small businesses. Powered by Claude.</p>
+    </div>
+    <div><h4>Product</h4><ul><li><a href="#what">Bookkeeping</a></li><li><a href="#what">Taxes</a></li><li><a href="#what">LLC formation</a></li><li><a href="#pricing">Pricing</a></li></ul></div>
+    <div><h4>Company</h4><ul><li><a href="#how">How it works</a></li><li><a href="#trust">Security</a></li><li><a href="#faq">FAQ</a></li><li><a href="mailto:hello@jupid.bid">Contact</a></li></ul></div>
+    <div><h4>Legal</h4><ul><li><a href="#">Terms</a></li><li><a href="#">Privacy</a></li><li><a href="#">Disclosures</a></li></ul></div>
+    <div class="legal">
+      <span>© 2026 Jupid. All rights reserved.</span>
+      <span>Jupid is not a law firm and does not provide legal advice. Tax filings are reviewed by independent enrolled agents and CPAs. Claude is a trademark of Anthropic, PBC.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* nav border on scroll */
+  const nav = document.getElementById('nav');
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 8), {passive:true});
+
+  /* reveal on scroll */
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), {threshold:.12});
+  document.querySelectorAll('.rv').forEach(el => io.observe(el));
+
+  /* waitlist (stub: no backend yet — stored locally) */
+  document.querySelectorAll('[data-form]').forEach(f => {
+    f.addEventListener('submit', ev => {
+      ev.preventDefault();
+      const input = f.querySelector('input'), note = f.nextElementSibling;
+      const v = input.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) { note.textContent = 'That email looks off — mind checking it?'; note.className = 'form-note err'; input.focus(); return; }
+      try { const l = JSON.parse(localStorage.getItem('jupid-waitlist') || '[]'); l.push({email:v, t:Date.now()}); localStorage.setItem('jupid-waitlist', JSON.stringify(l)); } catch(e) {}
+      note.textContent = "You're on the list. We'll be in touch when your spot opens.";
+      note.className = 'form-note ok';
+      f.querySelector('button').textContent = 'Added ✓';
+      f.querySelector('button').disabled = true;
+      input.value = '';
+    });
+  });
+
+  /* pricing toggle */
+  const bb = document.querySelectorAll('.billing button');
+  bb.forEach(b => b.addEventListener('click', () => {
+    bb.forEach(x => x.setAttribute('aria-pressed', x === b));
+    document.querySelectorAll('.price [data-m]').forEach(p => p.textContent = '$' + p.dataset[b.dataset.b]);
+    document.querySelectorAll('[data-per]').forEach(p => p.textContent = b.dataset.b === 'y' ? 'billed annually' : 'billed monthly');
+  }));
+
+  /* chat demo */
+  const S = {
+    books: [
+      ['u','How did we do last month?'],
+      ['a','September was your best month yet. Revenue up 18%, mostly from two new Stripe subscriptions.',
+        '<div class="doc"><div class="row"><span>Revenue</span><span>$24,180</span></div><div class="row"><span>Expenses</span><span>−$9,412</span></div><div class="row tot"><span>Net profit</span><span class="ok">$14,768</span></div></div>'],
+      ['a','One thing: $1,200 to "M. Ortiz" via Zelle. Contractor or personal?','<div class="chips"><span>Contractor</span><span>Personal</span><span>Something else</span></div>'],
+      ['u','Contractor — she did the illustrations.'],
+      ['a','Got it — filed under Contract labor. She\'s now over $600 for the year, so I\'ll prepare her 1099-NEC in January.']
+    ],
+    taxes: [
+      ['u','What do I owe for Q4 estimated taxes?'],
+      ['a','Based on your books through September, your Q4 federal estimate is due January 15:',
+        '<div class="doc"><div class="row"><span>Net income YTD</span><span>$96,420</span></div><div class="row"><span>Self-employment tax</span><span>$4,180</span></div><div class="row"><span>Federal income tax</span><span>$3,960</span></div><div class="row tot"><span>Q4 payment</span><span>$8,140</span></div></div>'],
+      ['a','I also found $2,310 in deductions you missed last quarter — mostly your home office and mileage. That brings it down to $7,630.'],
+      ['u','Nice. Pay it from the business account.'],
+      ['a','Drafted the IRS Direct Pay for $7,630. Approve it and I\'ll schedule it for tomorrow.','<div class="chips"><span>Approve payment</span><span>Show the math</span></div>']
+    ],
+    llc: [
+      ['u','I want to start an LLC for my design studio. I live in Lisbon.'],
+      ['a','Happy to. For a non-US founder selling to US clients, I\'d suggest a Wyoming LLC — low fees, strong privacy, no state income tax. Delaware makes sense only if you\'ll raise VC.'],
+      ['u','Wyoming. Call it Northwind Studio.'],
+      ['a','Northwind Studio LLC is available. Here\'s the plan:',
+        '<div class="doc"><div class="row"><span>Articles of Organization</span><span>$100</span></div><div class="row"><span>Registered agent (yr 1)</span><span>incl.</span></div><div class="row"><span>EIN — no SSN needed</span><span>incl.</span></div><div class="row tot"><span>Total today</span><span>$100</span></div></div>'],
+      ['a','I\'ll draft the operating agreement next. Should it be single-member?','<div class="chips"><span>Yes, just me</span><span>Add a partner</span></div>']
+    ]
+  };
+  const thread = document.getElementById('thread');
+  const tabs = document.querySelectorAll('.tabs button');
+  let run = 0;
+  const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+  const esc = s => s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  function bubble(m){
+    if (m[0] === 'u') {
+      const chips = thread.querySelectorAll('.chips');
+      const last = chips[chips.length - 1];
+      if (last) last.querySelectorAll('span').forEach(c => { if (m[1].toLowerCase().startsWith(c.textContent.toLowerCase())) c.classList.add('on'); });
+    }
+    const d = document.createElement('div');
+    d.className = 'msg ' + m[0];
+    d.innerHTML = esc(m[1]) + (m[2] || '');
+    thread.appendChild(d);
+    while (thread.scrollHeight > thread.clientHeight + 4 && thread.children.length > 1) thread.removeChild(thread.firstChild);
+  }
+  async function play(key){
+    const id = ++run;
+    thread.innerHTML = '';
+    for (const m of S[key]) {
+      if (id !== run) return;
+      if (m[0] === 'a') {
+        const t = document.createElement('div');
+        t.className = 'msg a typing'; t.innerHTML = '<i></i><i></i><i></i>';
+        thread.appendChild(t); await wait(1100); t.remove();
+      } else await wait(650);
+      if (id !== run) return;
+      bubble(m);
+      await wait(m[0]==='a' ? 900 : 400);
+    }
+    await wait(5200);
+    if (id !== run || userPicked) return;
+    const order = ['books','taxes','llc'];
+    select(order[(order.indexOf(key)+1)%3]);
+  }
+  let userPicked = false;
+  function select(key){
+    tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.s === key));
+    play(key);
+  }
+  tabs.forEach(t => t.addEventListener('click', () => { userPicked = true; select(t.dataset.s); }));
+  select('books');
+})();
+</script>
+</body>
+</html>
